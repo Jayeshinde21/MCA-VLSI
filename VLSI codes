@@ -1,0 +1,379 @@
+//EXP-1: 4:1 Multiplexer
+module mux4to1 (
+    input I0,
+    input I1,
+    input I2,
+    input I3,
+    input S0,
+    input S1,
+    output reg Y
+);
+    always @(*) begin
+        case ({S1, S0})
+            2'b00: Y = I0;
+            2'b01: Y = I1;
+            2'b10: Y = I2;
+            2'b11: Y = I3;
+        endcase
+    end
+endmodule
+
+// Testbench code
+module tb_mux4to1;
+    reg I0, I1, I2, I3;
+    reg S0, S1;
+    wire Y;
+
+    mux4to1 uut (
+        .I0(I0),
+        .I1(I1),
+        .I2(I2),
+        .I3(I3),
+        .S0(S0),
+        .S1(S1),
+        .Y(Y)
+    );
+
+    initial begin
+        I0 = 0; I1 = 1; I2 = 0; I3 = 1;
+        S1 = 0; S0 = 0; #10;
+        S1 = 0; S0 = 1; #10;
+        S1 = 1; S0 = 0; #10;
+        S1 = 1; S0 = 1; #10;
+        $stop;
+    end
+endmodule
+
+
+
+
+//EXP-2: Full Adder with half adders
+module half_adder (
+    input A, B,
+    output Sum, Carry
+);
+    assign Sum = A ^ B;
+    assign Carry = A & B;
+endmodule
+
+// Full Adder using Half Adders
+module full_adder (A, B, Cin, Sum, Cout);
+    input A, B, Cin;
+    output Sum, Cout;
+    wire S1, C1, C2;
+
+    half_adder HA1 (A, B, S1, C1);
+    half_adder HA2 (S1, Cin, Sum, C2);
+
+    assign Cout = C1 | C2;
+endmodule
+
+// Testbench code
+module tb_full_adder;
+    reg A, B, Cin;
+    wire Sum, Cout;
+
+    full_adder uut (A, B, Cin, Sum, Cout);
+
+    initial begin
+        A = 0; B = 0; Cin = 0; #10;
+        A = 0; B = 0; Cin = 1; #10;
+        A = 0; B = 1; Cin = 0; #10;
+        A = 0; B = 1; Cin = 1; #10;
+        A = 1; B = 0; Cin = 0; #10;
+        A = 1; B = 0; Cin = 1; #10;
+        A = 1; B = 1; Cin = 0; #10;
+        A = 1; B = 1; Cin = 1; #10;
+        $stop;
+    end
+endmodule
+
+
+
+
+
+//EXP-3: Binary-to-Gray Converter
+module bin2gray (
+    input wire [3:0] bin, // 4-bit Binary input
+    output wire [3:0] gray // 4-bit Gray code output
+);
+
+assign gray[3] = bin[3];
+assign gray[2] = bin[3] ^ bin[2];
+assign gray[1] = bin[2] ^ bin[1];
+assign gray[0] = bin[1] ^ bin[0];
+assign gray = bin ^ (bin >> 1);
+
+endmodule
+
+//Testbench
+`timescale 1ns / 1ps
+module tb_bin2gray;
+
+reg [3:0] bin;
+wire [3:0] gray;
+
+bin2gray uut (
+    .bin(bin),
+    .gray(gray)
+);
+
+initial begin
+    $monitor("Time = %0t | Binary = %b (%2d) | Gray = %b", $time, bin, bin, gray);
+
+    bin = 4'b0000; #10;
+    bin = 4'b0001; #10;
+    bin = 4'b0010; #10;
+    bin = 4'b0011; #10;
+    bin = 4'b0100; #10;
+    bin = 4'b1000; #10;
+    bin = 4'b1100; #10;
+    bin = 4'b1111; #10;
+    $stop;
+end
+
+endmodule
+
+
+
+
+//EXP-4: JK Flip-Flop & T Flip-Flop
+module jk_ff(
+    input j,
+    input k,
+    input clk,
+    input rst,
+    output reg q,
+    output q_bar
+);
+    assign q_bar = ~q;
+
+    always @(posedge clk or posedge rst) begin
+        if (rst)
+            q <= 1'b0;
+        else begin
+            case ({j, k})
+                2'b00: q <= q;       // No change
+                2'b01: q <= 1'b0;    // Reset
+                2'b10: q <= 1'b1;    // Set
+                2'b11: q <= ~q;      // Toggle
+            endcase
+        end
+    end
+endmodule
+
+module t_ff(
+    input t,
+    input clk,
+    input rst,
+    output reg q,
+    output q_bar
+);
+    assign q_bar = ~q;
+
+    always @(posedge clk or posedge rst) begin
+        if (rst)
+            q <= 1'b0;
+        else begin
+            if (t == 1'b0)
+                q <= q;       // No change
+            else
+                q <= ~q;      // Toggle
+        end
+    end
+endmodule
+
+// Testbench code
+`timescale 1ns / 1ps
+module tb_flipflops;
+    reg j, k, t, clk, rst;
+    wire q_jk, q_bar_jk;
+    wire q_t, q_bar_t;
+
+    jk_ff uut1 (
+        .j(j),
+        .k(k),
+        .clk(clk),
+        .rst(rst),
+        .q(q_jk),
+        .q_bar(q_bar_jk)
+    );
+
+    t_ff uut2 (
+        .t(t),
+        .clk(clk),
+        .rst(rst),
+        .q(q_t),
+        .q_bar(q_bar_t)
+    );
+
+    always #5 clk = ~clk;
+
+    initial begin
+        $monitor("Time=%0t | rst=%b clk=%b | JK(j=%b,k=%b)->q=%b | T(t=%b)->q=%b", 
+                 $time, rst, clk, j, k, q_jk, t, q_t);
+
+        clk = 0;
+        rst = 1;
+        j = 0; k = 0; t = 0;
+        
+        #12 rst = 0; // Release reset
+        
+        #10 j = 1; k = 0; t = 1; // Set JK, Toggle T
+        #10 j = 0; k = 1; t = 0; // Reset JK, Hold T
+        #10 j = 1; k = 1; t = 1; // Toggle JK, Toggle T
+        #10 j = 0; k = 0; t = 0; // Hold both
+        
+        #20 $stop;
+    end
+endmodule
+
+
+
+
+
+//EXP-5: 3-bit Asynchronous counter using D Flip-Flops
+module async_counter_3bit (
+    input clk,
+    input reset,
+    output [2:0] q
+);
+    wire [2:0] d;
+    assign d = ~q;
+
+    d_ff ff0 (
+        .clk(clk),
+        .reset(reset),
+        .d(d[0]),
+        .q(q[0])
+    );
+
+    d_ff ff1 (
+        .clk(q[0]),
+        .reset(reset),
+        .d(d[1]),
+        .q(q[1])
+    );
+
+    d_ff ff2 (
+        .clk(q[1]),
+        .reset(reset),
+        .d(d[2]),
+        .q(q[2])
+    );
+endmodule
+
+module d_ff (
+    input clk,
+    input reset,
+    input d,
+    output reg q
+);
+    always @(posedge clk or posedge reset) begin
+        if (reset)
+            q <= 1'b0;
+        else
+            q <= d;
+    end
+
+endmodule
+
+// Testbench code
+`timescale 1ns / 1ps
+module tb_async_counter_3bit;
+    reg clk;
+    reg reset;
+    wire [2:0] q;
+
+    async_counter_3bit uut (
+        .clk(clk),
+        .reset(reset),
+        .q(q)
+    );
+
+    always #5 clk = ~clk;
+    initial begin
+        clk = 0;
+        reset = 1;
+        #10;
+        reset = 0;
+        #100;
+        $finish;
+    end
+
+    initial begin
+        $monitor("Time = %0t | Reset = %b | Q = %b", $time, reset, q);
+    end
+endmodule
+
+
+
+
+//EXP-6: Serial-In Serial-Out / SISO Shift Register
+module d_ff (
+    input clk,
+    input rst,
+    input d,
+    output reg q
+);
+    always @(posedge clk or posedge rst) begin
+        if (rst)
+            q <= 1'b0;
+        else
+            q <= d;
+    end
+endmodule
+
+module siso_4bit (
+    input clk,
+    input rst,
+    input sin,
+    output sout
+);
+    wire q0, q1, q2, q3;
+
+    d_ff FF0 (.clk(clk), .rst(rst), .d(sin), .q(q0));
+    d_ff FF1 (.clk(clk), .rst(rst), .d(q0),  .q(q1));
+    d_ff FF2 (.clk(clk), .rst(rst), .d(q1),  .q(q2));
+    d_ff FF3 (.clk(clk), .rst(rst), .d(q2),  .q(q3));
+    assign sout = q3;
+endmodule
+
+// Testbench Code
+`timescale 1ns / 1ps
+module tb_siso_4bit;
+    reg clk;
+    reg rst;
+    reg sin;
+    wire sout;
+
+    siso_4bit uut (
+        .clk(clk),
+        .rst(rst),
+        .sin(sin),
+        .sout(sout)
+    );
+
+    initial begin
+        clk = 1'b0;
+        forever #5 clk = ~clk;
+    end
+    initial begin
+        rst = 1'b1;
+        sin = 1'b0;
+        #10;
+        rst = 1'b0;
+       
+        #10; sin = 1'b1;
+        #10; sin = 1'b0;
+        #10; sin = 1'b1;
+        #10; sin = 1'b0;
+        #40;
+        $finish;
+    end
+
+    initial begin
+        $monitor("Time=%0t | rst=%b | sin=%b | q=%b%b%b%b | sout=%b", 
+                 $time, rst, sin, uut.q3, uut.q2, uut.q1, uut.q0, sout);
+    end
+endmodule
