@@ -1,0 +1,280 @@
+//EXP-1: 8051 Port Interfacing & LEDs Blinking
+#include <reg51.h>
+void msdelay(unsigned int time) {
+    unsigned int i, j;
+    for (i = 0; i < time; i++)
+        for (j = 0; j < 1275; j++);
+}
+
+void main() {
+    P1 = 0x00;          // Initialize Port 1
+    while(1) {
+        P1 = 0x00;      // LEDs OFF
+        msdelay(100);
+        P1 = 0xFF;      // LEDs ON
+        msdelay(100);
+    }
+}
+
+
+
+
+Exp-2: 7-Segment Display using an 8051 microcontroller
+#include <reg51.h>
+void msdelay(void);
+unsigned char mydata[] = {0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F};
+
+void main(void)
+{
+    unsigned char x;
+    while(1)
+    {
+        for(x=0; x<=9; x++)
+        {
+            P2 = mydata[x];
+            msdelay();
+        }
+    }
+}
+void msdelay(void)
+{
+    unsigned int i, j;
+    for(i=0; i<100; i++)
+    {
+        for(j=0; j<1275; j++);
+    }
+}
+
+
+
+
+EXP-3A: Waveform Generation using DAC 0808
+#include <reg51.h>
+void msdelay(void);
+
+//1. Ramp Wave Generation ---
+void ramp_wave(void) {
+    unsigned int x = 0;
+    P1 = 0x00;
+    while(1) {
+        P1 = x;
+        x++;
+    }
+}
+
+//2. Square Wave Generation ---
+void square_wave(void) {
+    unsigned int x = 0;
+    while(1) {
+        P1 = 0x00;
+        msdelay();
+        P1 = 0xFF;
+        msdelay();
+    }
+}
+
+//3. Triangular Wave Generation ---
+void triangular_wave(void) {
+    while(1) {
+        P1 = 0x00;
+        // Increment up to 255
+        for(unsigned int x = 0; x < 256; x++) {
+            P1 = x;
+        }
+        // Decrement back down from 255
+        for(unsigned int x = 255; x > 0; x--) {
+            P1 = x;
+        }
+    }
+}
+void msdelay(void) {
+    unsigned int i, j;
+    for(i = 0; i < 500; i++) {
+        for(j = 0; j < 1275; j++);
+    }
+}
+
+
+
+
+EXP-3B: Stepper Motor Interfacing
+#include <reg51.h>
+void msdelay(void);
+void main(void)
+{
+    P2 = 0x00;
+    while(1)
+    {
+        P2 = 0x09;
+        msdelay();
+        P2 = 0x0C;
+        msdelay();
+        P2 = 0x06;
+        msdelay();
+        P2 = 0x03;
+        msdelay();
+    }
+}
+void msdelay(void)
+{
+    int i, j;
+    for(i=0; i<2; i++)
+    {
+        for(j=0; j<200; j++);
+    }
+}
+
+
+
+
+Exp-5: Interfacing of LED Blinking Using LPC2148
+#define IO0SET    (*(volatile unsigned long *)0xE0028004)
+#define IO0DIR    (*(volatile unsigned long *)0xE0028008)
+#define IO0CLR    (*(volatile unsigned long *)0xE002800C)
+#define IO1SET    (*(volatile unsigned long *)0xE0028014)
+#define IO1DIR    (*(volatile unsigned long *)0xE0028018)
+#define IO1CLR    (*(volatile unsigned long *)0xE002801C)
+#define PINSEL0   (*(volatile unsigned long *)0xE002C000)
+#define PINSEL1   (*(volatile unsigned long *)0xE002C004)
+#define PINSEL2   (*(volatile unsigned long *)0xE002C014)
+
+void msdelay(void);
+int main(void)
+{
+    PINSEL0 = 0x00000000;
+    IO0DIR = 0xFFFFFFFF;
+    
+    while (1)
+    {
+        IO0SET = 0xFFFFFFFF;
+        msdelay();
+        msdelay();
+        
+        IO0CLR = 0xFFFFFFFF;
+        msdelay();
+        msdelay();
+    }
+}
+void msdelay(void)
+{
+    unsigned long i, j;
+    for (i = 0; i < 100; i++)
+        for (j = 0; j < 1000; j++);
+}
+
+
+
+
+EXP-6: Interfacing a 16x2 LCD with LPC2148 and Displaying a Message
+#define IO0SET    (*(volatile unsigned long *)0xE0028004)
+#define IO0SET    (*(volatile unsigned long *)0xE0028004)
+#define IO0DIR    (*(volatile unsigned long *)0xE0028008)
+#define IO0CLR    (*(volatile unsigned long *)0xE002800C)
+#define PINSEL0   (*(volatile unsigned long *)0xE002C000)
+#define PINSEL1   (*(volatile unsigned long *)0xE002C004)
+#define RS        (1<<5)//P0.5
+#define RW        (1<<6)//P0.6
+#define EN        (1<<7)//P0.7
+#define LCD_DATA  0x0000FF00
+
+void delay(void)
+{
+    unsigned long i;
+    for(i=0; i<50000; i++);
+}
+
+void lcd_cmd(unsigned char cmd)
+{
+    IO0CLR = RS;
+    IO0CLR = RW;
+    IO0CLR = LCD_DATA;
+    IO0SET = ((unsigned long)cmd<<8);
+    IO0SET = EN;
+    delay();
+    IO0CLR = EN;
+    delay();
+}
+
+void lcd_data(unsigned char data)
+{
+    IO0SET = RS;
+    IO0CLR = RW;
+    IO0CLR = LCD_DATA;
+    IO0SET = ((unsigned long)data<<8);
+    IO0SET = EN;
+    delay();
+    IO0CLR = EN;
+    delay();
+}
+
+void lcd_init(void)
+{
+    delay();
+    lcd_cmd(0x38);
+    lcd_cmd(0x0C);
+    lcd_cmd(0x01);
+    lcd_cmd(0x06);
+    lcd_cmd(0x80);
+}
+
+int main(void)
+{
+    PINSEL0 = 0x00000000;
+    PINSEL1 = 0x00000000;
+
+        Configure:
+        P0.5 -> RS
+        P0.6 -> RW
+        P0.7 -> EN
+        P0.8-P0.15 -> LCD D0-D7
+        Mask = 0x0000FFEO
+    
+    IO0DIR = 0x0000FFE0;
+    IO0CLR = 0x0000FFE0;
+    
+    lcd_init();
+    lcd_data('N');
+    lcd_data('M');
+    lcd_data('I');
+    lcd_data('E');
+    lcd_data('T');
+    
+    while(1)
+    {
+        /* Keep displaying NMIET */
+    }
+}
+
+
+
+
+EXP-7: UART0 Echo Communication Using LPC2148
+#define PINSEL0   (*(volatile unsigned int *)0xE002C000)
+#define IO0DIR    (*(volatile unsigned int *)0xE0028008)
+#define U0RBR     (*(volatile unsigned int *)0xE000C000) // Receiver Buffer Register
+#define U0THR     (*(volatile unsigned int *)0xE000C000) // Transmit Holding Register
+#define U0DLL     (*(volatile unsigned int *)0xE000C000) // Divisor Latch LSB
+#define U0DLM     (*(volatile unsigned int *)0xE000C004) // Divisor Latch MSB
+#define U0LCR     (*(volatile unsigned int *)0xE000C00C) // Line Control Register
+#define U0LSR     (*(volatile unsigned int *)0xE000C014) // Line Status Register
+
+int main(void)
+{
+    char value;
+    
+    PINSEL0 = 0x00000005;  // P0.0 - TXD0; P0.1 - RXD0
+    IO0DIR  = 0x00000001;  // Set P0.0 as output
+    U0LCR = 0x83;          // Unlock Divisor Latches (DLAB = 1)
+    U0DLM = 0x00;          // Set baud rate to 9600
+    U0DLL = 0x97;          
+    U0LCR = 0x03;          // Lock Baud Rate (DLAB = 0)
+    
+    while(1)
+    {
+        while (!(U0LSR & 0x01)); // Check received data ready bit
+        value = U0RBR;           // Read valid data
+        
+        while (!(U0LSR & 0x20)); // Monitor if transmit register is empty
+        U0THR = value;           // Transfer contents to U0THR
+    }
+}
