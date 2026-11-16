@@ -19,6 +19,9 @@ void main() {
 
 
 
+
+
+
 Exp-2: 7-Segment Display using an 8051 microcontroller
 #include <reg51.h>
 void msdelay(void);
@@ -44,6 +47,9 @@ void msdelay(void)
         for(j=0; j<1275; j++);
     }
 }
+
+
+
 
 
 
@@ -97,6 +103,9 @@ void msdelay(void) {
 
 
 
+
+
+
 EXP-3B: Stepper Motor Interfacing
 #include <reg51.h>
 void msdelay(void);
@@ -123,6 +132,9 @@ void msdelay(void)
         for(j=0; j<200; j++);
     }
 }
+
+
+
 
 
 
@@ -244,6 +256,9 @@ int main(void)
         /* Keep displaying NMIET */
     }
 }
+
+
+
 
 
 
